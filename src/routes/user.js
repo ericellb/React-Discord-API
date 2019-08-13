@@ -7,13 +7,14 @@ let sql = require('../db');
 // We will fetch all of the data
 // Server list + channels
 router.get('/user', (req, res) => {
+  const userId = req.query.userId;
   // Query to get all of the servers + channels + data
   sql.query(`SELECT servers.server_id, servers.server_name, channels.channel_id, channels.channel_name, messages.user_name, messages.msg, messages.date FROM messages 
   JOIN channels ON messages.channel_id = channels.channel_id 
   JOIN serverchannels ON channels.channel_id = serverchannels.channel_id 
   JOIN servers ON serverchannels.server_id = servers.server_id 
   JOIN userservers ON servers.server_id = userservers.server_id 
-  JOIN users ON userservers.user_id = users.user_id WHERE users.user_id = 1`, (err, result) => {
+  JOIN users ON userservers.user_id = users.user_id WHERE users.user_id = ${userId}`, (err, result) => {
       if (err) {
         res.status(400).send('Server error');
         throw err;
@@ -51,13 +52,13 @@ router.post('/user', async (req, res) => {
   let sqlQuery = `SELECT * FROM users WHERE user_id = ${userId}`;
   let response = sql.query(sqlQuery);
   if (response > 0) {
-    res.status(200).send('User already exists');
+    res.status(200).send(true);
   }
   else {
     sqlQuery = `INSERT INTO users (user_id, name) VALUES ('${userId}', '${userName}')`;
     response = await sql.query(sqlQuery);
     if (response > 0)
-      res.status(200).send('User created!');
+      res.status(200).send(true);
   }
 })
 
