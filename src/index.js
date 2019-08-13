@@ -9,6 +9,7 @@ let cors = require('cors');
 // Routes
 let userRouter = require('./routes/user');
 let serverRouter = require('./routes/server');
+let channelRouter = require('./routes/channel');
 
 // Config for env variables
 dotenv.config();
@@ -41,3 +42,4 @@ app.use((req, res, next) => {
 // Use routes
 app.use(userRouter);
 app.use(serverRouter);
+app.use(channelRouter);
