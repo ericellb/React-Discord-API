@@ -21,6 +21,9 @@ router.post('/channel/create', async (req, res) => {
       createChannel(channelId, channelName, serverId, userId);
       res.status(200).send(`Channel ${channelName} with ID ${channelId} Created`);
     }
+    else {
+      res.status(401).send("You dont exist in the database. Stop that!");
+    }
   }
 });
 

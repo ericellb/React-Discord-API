@@ -20,7 +20,7 @@ router.post('/server/create', async (req, res) => {
       res.send(`Server ${serverName} with ID ${serverId} Created`);
     }
     else {
-      res.status(400).send('User submitting request does not exist.');
+      res.status(401).send('You dont exist in the database. Stop that!');
     }
   }
 })
@@ -40,7 +40,7 @@ router.post('/server/join', async (req, res) => {
       res.send(`Server ${response[0].server_name} with ID ${serverId} Joined`);
     }
     else {
-      res.status(400).send('User submitting request does not exist.');
+      res.status(401).send('You dont exist in the database. Stop that!');
     }
   }
 })
@@ -60,7 +60,7 @@ router.post('/server/rename', async (req, res) => {
       res.status(200).send(`Server with ID : ${serverId} Renamed to ${serverName}`);
     }
     else {
-      res.status(400).send('User submitting request is not an admin');
+      res.status(401).send("You're not an admin. Stop that!");
     }
   }
 })
