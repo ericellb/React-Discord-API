@@ -11,8 +11,7 @@ router.get('/user', (req, res) => {
   // Query to get all of the servers + channels + data
   sql.query(`SELECT servers.server_id, servers.server_name, channels.channel_id, channels.channel_name, messages.user_name, messages.msg, messages.date FROM messages 
   JOIN channels ON messages.channel_id = channels.channel_id 
-  JOIN serverchannels ON channels.channel_id = serverchannels.channel_id 
-  JOIN servers ON serverchannels.server_id = servers.server_id 
+  JOIN servers ON channels.server_id = servers.server_id 
   JOIN userservers ON servers.server_id = userservers.server_id 
   JOIN users ON userservers.user_id = users.user_id WHERE users.user_id = ${userId}`, (err, result) => {
       if (err) {

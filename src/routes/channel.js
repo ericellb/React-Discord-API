@@ -8,7 +8,7 @@ let { getUniqueId } = require('../methods');
 // Expects -> Channel Name
 // Expects -> Server Id
 // Expects -> User Id
-router.post('/channels', async (req, res) => {
+router.post('/channel/create', async (req, res) => {
   // Check if params exist
   const { channelName, serverId, userId } = req.query;
   if (!channelName || !serverId || !userId) {
@@ -27,8 +27,7 @@ router.post('/channels', async (req, res) => {
 
 // Create channel and all intermediary tables
 const createChannel = (channelId, channelName, serverId, userId) => {
-  sql.query(`INSERT INTO channels (channel_id, channel_name) VALUES ('${channelId}', '${channelName}')`);
-  sql.query(`INSERT INTO serverchannels (server_id, channel_id) VALUES('${serverId}', '${channelId}')`);
+  sql.query(`INSERT INTO channels (channel_id, channel_name, server_id) VALUES ('${channelId}', '${channelName}', '${serverId}')`);
   sql.query(`INSERT INTO messages (channel_id) VALUES ('${channelId}')`);
 }
 

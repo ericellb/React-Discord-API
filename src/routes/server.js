@@ -51,8 +51,7 @@ router.post('/server/join', async (req, res) => {
 const createServer = (serverId, serverName, channelId, userId) => {
   sql.query(`INSERT INTO servers (server_id, server_name, owner_id) VALUES ('${serverId}', '${serverName}', '${userId}')`);
   sql.query(`INSERT INTO userservers (user_id, server_id) VALUES ('${userId}', '${serverId}')`);
-  sql.query(`INSERT INTO channels (channel_id, channel_name) VALUES ('${channelId}', 'general')`);
-  sql.query(`INSERT INTO serverchannels (server_id, channel_id) VALUES ('${serverId}', '${channelId}')`);
+  sql.query(`INSERT INTO channels (channel_id, channel_name, server_id) VALUES ('${channelId}', 'general', '${serverId}')`);
   sql.query(`INSERT INTO messages (channel_id) VALUES ('${channelId}')`);
 }
 
