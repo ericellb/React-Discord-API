@@ -8,6 +8,13 @@ exports.userExists = async (userId) => {
   else return false;
 }
 
+exports.userIsAdmin = async (userId, serverId) => {
+  const sqlQuery = `SELECT * from serveradmins WHERE user_id = '${userId}' AND server_id = '${serverId}'`;
+  const response = await sql.query(sqlQuery);
+  if (response.length > 0) return true;
+  else return false;
+}
+
 // Gets a Server Id and checks if it is unique in DB
 exports.getUniqueId = async (type) => {
   const id = generateId();

@@ -1,8 +1,7 @@
 let express = require('express');
 let router = express.Router();
 let sql = require('../db');
-let { userExists } = require('../methods');
-let { getUniqueId } = require('../methods');
+let { userExists, getUniqueId, userIsAdmin } = require('../methods');
 
 
 // Route to create a server
@@ -46,6 +45,26 @@ router.post('/server/join', async (req, res) => {
   }
 })
 
+// Route to rename a server
+// Expects -> ServerName
+// Expects -> ServerId
+// Expects -> UserId
+router.post('/server/rename', async (req, res) => {
+  const { serverName, serverId, userId } = req.query;
+  if (!serverName || !serverId || !userId) {
+    res.status(400).send('Invalid Params');
+  }
+  else {
+    if (await userIsAdmin(userId, serverId)) {
+      const response = await renameServer(serverName, serverId);
+      res.status(200).send(`Server with ID : ${serverId} Renamed to ${serverName}`);
+    }
+    else {
+      res.status(400).send('User submitting request is not an admin');
+    }
+  }
+})
+
 
 // Creates Server and all intermediary join tables
 const createServer = (serverId, serverName, channelId, userId) => {
@@ -59,6 +78,10 @@ const createServer = (serverId, serverName, channelId, userId) => {
 const joinServer = (serverId, userId) => {
   sql.query(`INSERT INTO userservers (server_id, user_id) VALUES ('${serverId}', '${userId}')`);
   return sql.query(`SELECT server_name FROM servers WHERE server_id = '${serverId}'`);
+}
+
+const renameServer = (serverName, serverId) => {
+  return sql.query(`UPDATE servers SET server_name = '${serverName}' WHERE server_id = '${serverId}'`);
 }
 
 module.exports = router;
