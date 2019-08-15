@@ -24,6 +24,7 @@ async function main() {
 
     // Listens for chat updates
     socket.on('simple-chat-message', async (msg) => {
+      // Emit messages to only users part of specific server
       const serverId = msg.server.split('-')[1];
       const sqlQuery = `SELECT user_id from userservers WHERE server_id = '${serverId}'`;
       const users = await sql.query(sqlQuery);
@@ -31,7 +32,11 @@ async function main() {
         console.log(user.user_id);
         io.emit(user.user_id, msg);
       });
-      io.emit('default', msg);
+
+      // Emit default message only when server_id is default one
+      const serverName = msg.server.split('-')[0];
+      if (serverName.toLowerCase() === "default")
+        io.emit('default', msg);
     });
 
     // Listens for userId updates
