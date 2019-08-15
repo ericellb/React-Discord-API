@@ -18,14 +18,25 @@ async function main() {
   dotenv.config();
   const PORT = process.env.PORT || 3001;
 
-  const servers = await sql.query('SELECT server_name FROM servers');
+  // Create socket
   io.on('connection', function (socket) {
-    console.log('User connected to Server')
-    servers.forEach((server) => {
-      socket.on(server.server_name, function (msg) {
-        console.log(`Message received for server ${server.server_name} and Rebroadcasting message : ` + JSON.stringify(msg));
-        io.emit(server.server_name, msg);
+    var userId = null;
+
+    // Listens for chat updates
+    socket.on('simple-chat-message', async (msg) => {
+      const serverId = msg.server.split('-')[1];
+      const sqlQuery = `SELECT user_id from userservers WHERE server_id = '${serverId}'`;
+      const users = await sql.query(sqlQuery);
+      users.forEach((user) => {
+        console.log(user.user_id);
+        io.emit(user.user_id, msg);
       });
+      io.emit('default', msg);
+    });
+
+    // Listens for userId updates
+    socket.on('simple-chat-userId', function (msg) {
+      userId = msg;
     })
   });
 

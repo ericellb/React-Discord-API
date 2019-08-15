@@ -2,6 +2,7 @@ let express = require('express');
 let router = express.Router();
 let mysql = require('mysql');
 let sql = require('../db');
+let { userExists } = require('../methods');
 
 // When user logs in (opens app)
 // We will fetch all of the data
@@ -48,10 +49,8 @@ router.post('/user', async (req, res) => {
   }
 
   // Check if userId exist, insert user into DB if not
-  let sqlQuery = `SELECT * FROM users WHERE user_id = ${userId}`;
-  let response = sql.query(sqlQuery);
-  if (response > 0) {
-    res.status(200).send(true);
+  if (await userExists(userId)) {
+    res.status(200).send('User already exists');
   }
   else {
     sqlQuery = `INSERT INTO users (user_id, name) VALUES ('${userId}', '${userName}')`;
