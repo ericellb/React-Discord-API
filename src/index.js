@@ -22,10 +22,11 @@ async function main() {
   io.on('connection', function (socket) {
     var userId = null;
 
-    // Listens for chat updates
-    socket.on('simple-chat-message', async (msg) => {
+    // Listens for new messages
+    socket.on('simple-chat-new-message', async (msg) => {
+      console.log(msg);
       // Store messsage in the DB
-      let sqlQuery = `INSERT INTO messages (channel_id, user_name, msg) VALUES ('${msg.topic.split('-')[1]}', '${msg.from}', '${msg.msg}')`;
+      let sqlQuery = `INSERT INTO messages (channel_id, user_name, msg) VALUES ('${msg.channel.split('-')[1]}', '${msg.from}', '${msg.msg}')`;
       sql.query(sqlQuery);
 
       // Emit messages to only users part of specific server
@@ -33,8 +34,8 @@ async function main() {
       sqlQuery = `SELECT user_id from userservers WHERE server_id = '${serverId}'`;
       const users = await sql.query(sqlQuery);
       users.forEach((user) => {
-        console.log(user.user_id);
-        io.emit(user.user_id, msg);
+        action = { type: "message", payload: msg };
+        io.emit(user.user_id, action);
       });
 
       // Emit default message only when server_id is default one
@@ -42,6 +43,7 @@ async function main() {
       if (serverName.toLowerCase() === "default")
         io.emit('default', msg);
     });
+
 
     // Listens for userId updates
     socket.on('simple-chat-userId', function (msg) {

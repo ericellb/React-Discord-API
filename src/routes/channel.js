@@ -10,8 +10,10 @@ let { getUniqueId } = require('../methods');
 // Expects -> User Id
 router.post('/channel/create', async (req, res) => {
   // Check if params exist
-  const { channelName, serverId, userId } = req.query;
-  if (!channelName || !serverId || !userId) {
+  const { channelName, server, userId } = req.query;
+  const serverName = server.split('0')[0];
+  const serverId = server.split('-')[1];
+  if (!channelName || !server || !userId) {
     res.status(400).send('Invalid params');
   }
   else {
@@ -19,7 +21,7 @@ router.post('/channel/create', async (req, res) => {
     if (await userIsAdmin(userId, serverId)) {
       const channelId = await getUniqueId('channel');
       createChannel(channelId, channelName, serverId, userId);
-      res.status(200).send(`Channel ${channelName} with ID ${channelId} Created`);
+      res.status(200).send({ channel: channelName + '-' + channelId, server: server });
     }
     else {
       res.status(401).send("Not authorized, stop that!");

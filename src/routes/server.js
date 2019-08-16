@@ -17,7 +17,7 @@ router.post('/server/create', async (req, res) => {
       const serverId = await getUniqueId('server');
       const channelId = await getUniqueId('channel');
       createServer(serverId, serverName, channelId, userId);
-      res.send(`Server ${serverName} with ID ${serverId} Created`);
+      res.send({ server: serverName + '-' + serverId, channel: "general" + '-' + channelId });
     }
     else {
       res.status(401).send('Not authorized, stop that!"');
@@ -57,7 +57,7 @@ router.post('/server/rename', async (req, res) => {
   else {
     if (await userIsAdmin(userId, serverId)) {
       const response = await renameServer(serverName, serverId);
-      res.status(200).send(`Server with ID : ${serverId} Renamed to ${serverName}`);
+      res.status(200).send({ server: serverName + '-' + serverId });
     }
     else {
       res.status(401).send("You're not an admin. Stop that!");
