@@ -20,7 +20,7 @@ router.post('/server/create', async (req, res) => {
       res.send(`Server ${serverName} with ID ${serverId} Created`);
     }
     else {
-      res.status(401).send('You dont exist in the database. Stop that!');
+      res.status(401).send('Not authorized, stop that!"');
     }
   }
 })
@@ -40,7 +40,7 @@ router.post('/server/join', async (req, res) => {
       res.send(`Server ${response[0].server_name} with ID ${serverId} Joined`);
     }
     else {
-      res.status(401).send('You dont exist in the database. Stop that!');
+      res.status(401).send('Not authorized, stop that!"');
     }
   }
 })
@@ -66,9 +66,28 @@ router.post('/server/rename', async (req, res) => {
 })
 
 
+// Route to get if user is admin
+// Expects -> userId
+// Expects -> serverId
+// Returns true or false
+router.get('/server/admin', async (req, res) => {
+
+  const { userId, serverId } = req.query;
+
+  // Check params
+  if (!userId || !serverId) {
+    res.status(400).send('Invalid params');
+  }
+
+  const response = await userIsAdmin(userId, serverId);
+  res.send(response);
+
+})
+
 // Creates Server and all intermediary join tables
 const createServer = (serverId, serverName, channelId, userId) => {
   sql.query(`INSERT INTO servers (server_id, server_name, owner_id) VALUES ('${serverId}', '${serverName}', '${userId}')`);
+  sql.query(`INSERT INTO serveradmins (server_id, user_id) VALUES ('${serverId}', '${userId}')`);
   sql.query(`INSERT INTO userservers (user_id, server_id) VALUES ('${userId}', '${serverId}')`);
   sql.query(`INSERT INTO channels (channel_id, channel_name, server_id) VALUES ('${channelId}', 'general', '${serverId}')`);
   sql.query(`INSERT INTO messages (channel_id) VALUES ('${channelId}')`);

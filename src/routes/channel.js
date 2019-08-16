@@ -1,7 +1,7 @@
 let express = require('express');
 let router = express.Router();
 let sql = require('../db');
-let { userExists } = require('../methods');
+let { userIsAdmin } = require('../methods');
 let { getUniqueId } = require('../methods');
 
 // Route to create a channel
@@ -16,13 +16,13 @@ router.post('/channel/create', async (req, res) => {
   }
   else {
     // Check if user exists
-    if (await userExists(userId)) {
+    if (await userIsAdmin(userId, serverId)) {
       const channelId = await getUniqueId('channel');
       createChannel(channelId, channelName, serverId, userId);
       res.status(200).send(`Channel ${channelName} with ID ${channelId} Created`);
     }
     else {
-      res.status(401).send("You dont exist in the database. Stop that!");
+      res.status(401).send("Not authorized, stop that!");
     }
   }
 });

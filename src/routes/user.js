@@ -3,7 +3,7 @@ let router = express.Router();
 let mysql = require('mysql');
 let sql = require('../db');
 let bcrypt = require('bcryptjs');
-let { userExists, getUniqueId } = require('../methods');
+let { userIsAdmin, getUniqueId } = require('../methods');
 
 // Route to get data associated with a specific user
 // Expects -> userId
@@ -47,29 +47,26 @@ router.get('/user/data', (req, res) => {
 router.post('/user/create', async (req, res) => {
   // Get query data from url
   let { userName, userPass } = req.query;
-  let errors = [];
+  let error = null;
 
-  // Check required fields
+  // Check for errors
   if (!userName || !userPass) {
-    errors.push({ msg: 'Invalid parmas' });
+    error = "Invalid Params";
+  }
+  else if (userPass.length < 6) {
+    error = "Passwords need to be minimum 6 chracters";
   }
 
-  // Check pass length
-  if (userPass.length < 6) {
-    errors.push({ msg: "Passwords need to be 6 characters" });
+  // If errors, send them
+  if (error !== null) {
+    res.status(401).send(error);
   }
-
-  // If errors let user know
-  if (errors.length > 0) {
-    res.status(401).send(errors);
-  }
-  // Else lets auth the user
   else {
     let response = await sql.query(`SELECT user_id from users where user_name = '${userName}'`);
     // User already exists
     if (response.length > 0) {
-      errors.push({ msg: "Username already exists" });
-      res.status(401).send(errors);
+      error = "Username already exists";
+      res.status(401).send(error);
     }
     // No user exists, lets create it!
     else {
@@ -96,21 +93,25 @@ router.post('/user/create', async (req, res) => {
 // Returns -> userId
 router.get('/user/login', async (req, res) => {
   const { userName, userPass } = req.query;
-  let errors = [];
+  let error = {};
 
   // Check params exist
   if (!userName || !userPass) {
     res.status(400).send('Invalid Params');
   }
 
+  // Check if password matches, if so return userName and userId
   const response = await sql.query(`SELECT * FROM users WHERE user_name = '${userName}'`);
   const hashPass = response[0].user_pass;
   const isMatch = await bcrypt.compare(userPass, hashPass);
   if (isMatch) {
     res.status(200).send({ "userName": userName, "userId": response[0].user_id });
   }
-
-
+  else {
+    error = 'Username / Password does not match';
+    res.status(400).send(error);
+  }
 });
+
 
 module.exports = router;
