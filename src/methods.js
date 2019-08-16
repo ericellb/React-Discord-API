@@ -23,6 +23,8 @@ exports.getUniqueId = async (type) => {
     sqlQuery = `SELECT * FROM servers WHERE server_id = '${id}'`;
   else if (type === 'channel')
     sqlQuery = `SELECT * FROM channels WHERE channel_id = '${id}'`;
+  else if (type === 'user')
+    sqlQuery = `SELECT * FROM users WHERE user_id = '${id}'`;
   let response = await sql.query(sqlQuery);
   if (response.length > 0) {
     return getUniqueId();

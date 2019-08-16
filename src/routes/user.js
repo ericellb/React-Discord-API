@@ -2,19 +2,19 @@ let express = require('express');
 let router = express.Router();
 let mysql = require('mysql');
 let sql = require('../db');
-let { userExists } = require('../methods');
+let bcrypt = require('bcryptjs');
+let { userExists, getUniqueId } = require('../methods');
 
-// When user logs in (opens app)
-// We will fetch all of the data
-// Server list + channels
-router.get('/user', (req, res) => {
-  const userId = req.query.userId;
+// Route to get data associated with a specific user
+// Expects -> userId
+router.get('/user/data', (req, res) => {
+  const { userId } = req.query;
   // Query to get all of the servers + channels + data
   sql.query(`SELECT servers.server_id, servers.server_name, channels.channel_id, channels.channel_name, messages.user_name, messages.msg, messages.date FROM messages 
   JOIN channels ON messages.channel_id = channels.channel_id 
   JOIN servers ON channels.server_id = servers.server_id 
   JOIN userservers ON servers.server_id = userservers.server_id 
-  JOIN users ON userservers.user_id = users.user_id WHERE users.user_id = ${userId}`, (err, result) => {
+  JOIN users ON userservers.user_id = users.user_id WHERE users.user_id = '${userId}'`, (err, result) => {
       if (err) {
         res.status(400).send('Server error');
         throw err;
@@ -39,25 +39,78 @@ router.get('/user', (req, res) => {
     })
 });
 
-// When user logs in, insert user info to DB
-router.post('/user', async (req, res) => {
+
+// Route to create a new user
+// Expects -> userName
+// Expects -> userPass
+// Returns -> userId
+router.post('/user/create', async (req, res) => {
   // Get query data from url
-  const userName = req.query.userName;
-  const userId = req.query.userId;
-  if (!userName || !userId) {
+  let { userName, userPass } = req.query;
+  let errors = [];
+
+  // Check required fields
+  if (!userName || !userPass) {
+    errors.push({ msg: 'Invalid parmas' });
+  }
+
+  // Check pass length
+  if (userPass.length < 6) {
+    errors.push({ msg: "Passwords need to be 6 characters" });
+  }
+
+  // If errors let user know
+  if (errors.length > 0) {
+    res.status(401).send(errors);
+  }
+  // Else lets auth the user
+  else {
+    let response = await sql.query(`SELECT user_id from users where user_name = '${userName}'`);
+    // User already exists
+    if (response.length > 0) {
+      errors.push({ msg: "Username already exists" });
+      res.status(401).send(errors);
+    }
+    // No user exists, lets create it!
+    else {
+      const userId = await getUniqueId('user');
+      bcrypt.genSalt(10, (err, salt) => {
+        bcrypt.hash(userPass, salt, (err, hash) => {
+          if (err) throw err;
+          userPass = hash;
+          console.log(userPass);
+          // Create user
+          sql.query(`INSERT INTO users (user_id, user_name, user_pass) VALUES ('${userId}', '${userName}', '${userPass}')`);
+          // Add to default server
+          sql.query(`INSERT INTO userservers (server_id, user_id) VALUES ('FANfDprXmt', '${userId}')`);
+          res.status(200).send({ "userName": userName, "userId": userId });
+        })
+      })
+    }
+  }
+})
+
+// Route to login
+// Expects -> userName
+// Expects -> userPass
+// Returns -> userId
+router.get('/user/login', async (req, res) => {
+  const { userName, userPass } = req.query;
+  let errors = [];
+
+  // Check params exist
+  if (!userName || !userPass) {
     res.status(400).send('Invalid Params');
   }
 
-  // Check if userId exist, insert user into DB if not
-  if (await userExists(userId)) {
-    res.status(200).send('User already exists');
+  const response = await sql.query(`SELECT * FROM users WHERE user_name = '${userName}'`);
+  const hashPass = response[0].user_pass;
+  const isMatch = await bcrypt.compare(userPass, hashPass);
+  if (isMatch) {
+    res.status(200).send({ "userName": userName, "userId": response[0].user_id });
   }
-  else {
-    sqlQuery = `INSERT INTO users (user_id, name) VALUES ('${userId}', '${userName}')`;
-    response = await sql.query(sqlQuery);
-    if (response > 0)
-      res.status(200).send(true);
-  }
-})
+
+
+});
 
 module.exports = router;
