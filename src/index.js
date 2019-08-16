@@ -24,9 +24,13 @@ async function main() {
 
     // Listens for chat updates
     socket.on('simple-chat-message', async (msg) => {
+      // Store messsage in the DB
+      let sqlQuery = `INSERT INTO messages (channel_id, user_name, msg) VALUES ('${msg.topic.split('-')[1]}', '${msg.from}', '${msg.msg}')`;
+      sql.query(sqlQuery);
+
       // Emit messages to only users part of specific server
       const serverId = msg.server.split('-')[1];
-      const sqlQuery = `SELECT user_id from userservers WHERE server_id = '${serverId}'`;
+      sqlQuery = `SELECT user_id from userservers WHERE server_id = '${serverId}'`;
       const users = await sql.query(sqlQuery);
       users.forEach((user) => {
         console.log(user.user_id);
