@@ -14,7 +14,7 @@ router.get('/user/data', (req, res) => {
   JOIN channels ON messages.channel_id = channels.channel_id 
   JOIN servers ON channels.server_id = servers.server_id 
   JOIN userservers ON servers.server_id = userservers.server_id 
-  JOIN users ON userservers.user_id = users.user_id WHERE users.user_id = '${userId}'`, (err, result) => {
+  JOIN users ON userservers.user_id = users.user_id WHERE users.user_id = ${sql.escape(userId)}`, (err, result) => {
       if (err) {
         res.status(400).send('Server error');
         throw err;
@@ -62,7 +62,7 @@ router.post('/user/create', async (req, res) => {
     res.status(401).send(error);
   }
   else {
-    let response = await sql.query(`SELECT user_id from users where user_name = '${userName}'`);
+    let response = await sql.query(`SELECT user_id from users where user_name = ${sql.escape(userName)}`);
     // User already exists
     if (response.length > 0) {
       error = "Username already exists";
@@ -77,7 +77,7 @@ router.post('/user/create', async (req, res) => {
           userPass = hash;
           console.log(userPass);
           // Create user
-          sql.query(`INSERT INTO users (user_id, user_name, user_pass) VALUES ('${userId}', '${userName}', '${userPass}')`);
+          sql.query(`INSERT INTO users (user_id, user_name, user_pass) VALUES (${sql.escape(userId)}, ${sql.escape(userName)}, ${sql.escape(userPass)})`);
           // Add to default server
           sql.query(`INSERT INTO userservers (server_id, user_id) VALUES ('FANfDprXmt', '${userId}')`);
           res.status(200).send({ "userName": userName, "userId": userId });

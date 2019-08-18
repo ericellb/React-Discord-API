@@ -86,21 +86,21 @@ router.get('/server/admin', async (req, res) => {
 
 // Creates Server and all intermediary join tables
 const createServer = (serverId, serverName, channelId, userId) => {
-  sql.query(`INSERT INTO servers (server_id, server_name, owner_id) VALUES ('${serverId}', '${serverName}', '${userId}')`);
-  sql.query(`INSERT INTO serveradmins (server_id, user_id) VALUES ('${serverId}', '${userId}')`);
-  sql.query(`INSERT INTO userservers (user_id, server_id) VALUES ('${userId}', '${serverId}')`);
-  sql.query(`INSERT INTO channels (channel_id, channel_name, server_id) VALUES ('${channelId}', 'general', '${serverId}')`);
-  sql.query(`INSERT INTO messages (channel_id) VALUES ('${channelId}')`);
+  sql.query(`INSERT INTO servers (server_id, server_name, owner_id) VALUES (${sql.escape(serverId)}, ${sql.escape(serverName)}, ${sql.escape(userId)})`);
+  sql.query(`INSERT INTO serveradmins (server_id, user_id) VALUES (${sql.escape(serverId)}, ${sql.escape(userId)})`);
+  sql.query(`INSERT INTO userservers (user_id, server_id) VALUES (${sql.escape(userId)}, ${sql.escape(serverId)})`);
+  sql.query(`INSERT INTO channels (channel_id, channel_name, server_id) VALUES (${sql.escape(channelId)}, 'general', ${sql.escape(serverId)})`);
+  sql.query(`INSERT INTO messages (channel_id) VALUES (${sql.escape(channelId)})`);
 }
 
 // Joins server and returns the server name
 const joinServer = (serverId, userId) => {
-  sql.query(`INSERT INTO userservers (server_id, user_id) VALUES ('${serverId}', '${userId}')`);
-  return sql.query(`SELECT server_name FROM servers WHERE server_id = '${serverId}'`);
+  sql.query(`INSERT INTO userservers (server_id, user_id) VALUES (${sql.escape(serverId)}, ${sql.escape(userId)})`);
+  return sql.query(`SELECT server_name FROM servers WHERE server_id = ${sql.escape(serverId)}`);
 }
 
 const renameServer = (serverName, serverId) => {
-  return sql.query(`UPDATE servers SET server_name = '${serverName}' WHERE server_id = '${serverId}'`);
+  return sql.query(`UPDATE servers SET server_name = ${sql.escape(serverName)} WHERE server_id = ${sql.escape(serverId)}`);
 }
 
 module.exports = router;
