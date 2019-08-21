@@ -75,9 +75,9 @@ router.post('/user/create', async (req, res) => {
         bcrypt.hash(userPass, salt, (err, hash) => {
           if (err) throw err;
           userPass = hash;
-          console.log(userPass);
+          var date = new Date();
           // Create user
-          sql.query(`INSERT INTO users (user_id, user_name, user_pass) VALUES (${sql.escape(userId)}, ${sql.escape(userName)}, ${sql.escape(userPass)})`);
+          sql.query(`INSERT INTO users (user_id, user_name, user_pass, user_last_active) VALUES (${sql.escape(userId)}, ${sql.escape(userName)}, ${sql.escape(userPass)}, ${sql.escape(date)})`);
           // Add to default server
           sql.query(`INSERT INTO userservers (server_id, user_id) VALUES ('FANfDprXmt', '${userId}')`);
           res.status(200).send({ "userName": userName, "userId": userId });
