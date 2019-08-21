@@ -29,10 +29,16 @@ router.get('/user/data', (req, res) => {
           if (data[serverName] === undefined)
             data[serverName] = {};
 
-          if (data[serverName][channelName] === undefined)
-            data[serverName][channelName] = [];
+          if (data[serverName]["activeUsers"] === undefined)
+            data[serverName]["activeUsers"] = [];
 
-          data[serverName][channelName].push({ "from": message.user_name, "msg": message.msg, "date": message.date });
+          if (data[serverName]["channels"] === undefined)
+            data[serverName]["channels"] = {};
+
+          if (data[serverName]["channels"][channelName] === undefined)
+            data[serverName]["channels"][channelName] = [];
+
+          data[serverName]["channels"][channelName].push({ "from": message.user_name, "msg": message.msg, "date": message.date });
         })
         res.status(200).send(data)
       }
