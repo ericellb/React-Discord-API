@@ -65,6 +65,25 @@ router.post('/server/rename', async (req, res) => {
   }
 })
 
+// Route to delete a server
+// Expects -> ServerId
+// Expects -> UserId
+router.delete('/server/delete', async (req, res) => {
+  const { serverId, userId } = req.query;
+  if (!serverId || !userId) {
+    res.status(400).send('Invalid Params')
+  }
+  else {
+    if (await userIsAdmin(userId, serverId)) {
+      const response = await deleteServer(serverId);
+      res.status(200).send(`Server with Id : ${serverId} deleted`);
+    }
+    else {
+      res.status(401).send("You're not an admin. Stop that!");
+    }
+  }
+})
+
 
 // Route to get if user is admin
 // Expects -> userId
@@ -99,8 +118,14 @@ const joinServer = (serverId, userId) => {
   return sql.query(`SELECT server_name FROM servers WHERE server_id = ${sql.escape(serverId)}`);
 }
 
+// Renames a server
 const renameServer = (serverName, serverId) => {
   return sql.query(`UPDATE servers SET server_name = ${sql.escape(serverName)} WHERE server_id = ${sql.escape(serverId)}`);
+}
+
+// Deletes a server
+const deleteServer = (serverId) => {
+  sql.query(`DELETE FROM servers where server_id = ${sql.escape(serverId)}`);
 }
 
 module.exports = router;
