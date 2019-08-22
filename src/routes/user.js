@@ -7,10 +7,11 @@ let { userIsAdmin, getUniqueId } = require('../methods');
 
 // Route to get data associated with a specific user
 // Expects -> userId
-router.get('/user/data', (req, res) => {
+router.get('/user/data', async (req, res) => {
   const { userId } = req.query;
+  const data = {};
   // Query to get all of the servers + channels + data
-  sql.query(`SELECT servers.server_id, servers.server_name, channels.channel_id, channels.channel_name, messages.user_name, messages.msg, messages.date FROM messages 
+  await sql.query(`SELECT servers.server_id, servers.server_name, channels.channel_id, channels.channel_name, messages.user_name, messages.msg, messages.date FROM messages 
   JOIN channels ON messages.channel_id = channels.channel_id 
   JOIN servers ON channels.server_id = servers.server_id 
   JOIN userservers ON servers.server_id = userservers.server_id 
@@ -20,29 +21,77 @@ router.get('/user/data', (req, res) => {
         throw err;
       }
       else {
-        const data = {};
         result.forEach((message) => {
           // Build servers / channel names with IDs
           const serverName = message.server_name + '-' + message.server_id;
           const channelName = message.channel_name + '-' + message.channel_id;
 
-          if (data[serverName] === undefined)
-            data[serverName] = {};
+          if (data["servers"] === undefined)
+            data["servers"] = {};
 
-          if (data[serverName]["activeUsers"] === undefined)
-            data[serverName]["activeUsers"] = [];
+          if (data["servers"][serverName] === undefined)
+            data["servers"][serverName] = {};
 
-          if (data[serverName]["channels"] === undefined)
-            data[serverName]["channels"] = {};
+          if (data["servers"][serverName]["activeUsers"] === undefined)
+            data["servers"][serverName]["activeUsers"] = [];
 
-          if (data[serverName]["channels"][channelName] === undefined)
-            data[serverName]["channels"][channelName] = [];
+          if (data["servers"][serverName]["channels"] === undefined)
+            data["servers"][serverName]["channels"] = {};
 
-          data[serverName]["channels"][channelName].push({ "from": message.user_name, "msg": message.msg, "date": message.date });
+          if (data["servers"][serverName]["channels"][channelName] === undefined)
+            data["servers"][serverName]["channels"][channelName] = [];
+
+          data["servers"][serverName]["channels"][channelName].push({ "from": message.user_name, "msg": message.msg, "date": message.date });
         })
-        res.status(200).send(data)
       }
+
+      // Query to get all Private messages for user
+      sql.query(`SELECT b.user_name as user_from, c.user_name as user_to, msg 
+                FROM user_messages a
+                JOIN users b ON b.user_id = a.user_from 
+                JOIN users c ON c.user_id = a.user_to 
+                WHERE a.user_from = ${sql.escape(userId)} 
+                OR a.user_to = ${sql.escape(userId)}`, async (err, result) => {
+          if (err) {
+            res.status(400).send('Server error');
+            throw err;
+          }
+          else {
+            const userName = await sql.query(`SELECT user_name from users where user_id = ${sql.escape(userId)}`)
+            result.forEach((privateMessage) => {
+              // Build privateMessages object
+              let user = null;
+
+
+              // If messages from me, set user to the TO 
+              if (privateMessage.user_from === userName[0].user_name)
+                user = privateMessage.user_to;
+              else
+                user = privateMessage.user_from;
+
+              if (data["privateMessages"] === undefined)
+                data["privateMessages"] = {};
+
+              if (data["privateMessages"][user] === undefined)
+                data["privateMessages"][user] = [];
+
+              data["privateMessages"][user].push({ "user": user, "from": privateMessage.user_from, "to": privateMessage.user_to, "msg": privateMessage.msg });
+            })
+
+          }
+
+          // If we got no results make a empty object
+          if (data["privateMessages"] === undefined)
+            data["privateMessages"] = {};
+
+          console.log(data);
+
+          // Return our final formatted data
+          res.status(200).send(data)
+        })
+
     })
+
 });
 
 
