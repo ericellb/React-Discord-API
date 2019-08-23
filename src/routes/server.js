@@ -109,7 +109,6 @@ const createServer = (serverId, serverName, channelId, userId) => {
   sql.query(`INSERT INTO serveradmins (server_id, user_id) VALUES (${sql.escape(serverId)}, ${sql.escape(userId)})`);
   sql.query(`INSERT INTO userservers (user_id, server_id) VALUES (${sql.escape(userId)}, ${sql.escape(serverId)})`);
   sql.query(`INSERT INTO channels (channel_id, channel_name, server_id) VALUES (${sql.escape(channelId)}, 'general', ${sql.escape(serverId)})`);
-  sql.query(`INSERT INTO messages (channel_id) VALUES (${sql.escape(channelId)})`);
 }
 
 // Joins server and returns the server name

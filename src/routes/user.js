@@ -80,12 +80,6 @@ router.get('/user/data', async (req, res) => {
 
           }
 
-          // If we got no results make a empty object
-          if (data["privateMessages"] === undefined)
-            data["privateMessages"] = {};
-
-          console.log(data);
-
           // Return our final formatted data
           res.status(200).send(data)
         })
