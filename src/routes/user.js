@@ -46,7 +46,6 @@ router.get('/user/data', async (req, res) => {
           if (message.user_name !== null && message.msg !== null)
             data["servers"][serverName]["channels"][channelName].push({ "from": message.user_name, "msg": message.msg, "date": message.date });
         })
-        console.log(data);
       }
 
       // Query to get all Private messages for user
@@ -82,6 +81,9 @@ router.get('/user/data', async (req, res) => {
               data["privateMessages"][user].push({ "user": user, "from": privateMessage.user_from, "to": privateMessage.user_to, "msg": privateMessage.msg });
             })
 
+            // If no private messages return data with empty privateMessages array
+            if (data["privateMessages"] === undefined)
+              data["privateMessages"] = [];
           }
 
           // Return our final formatted data
