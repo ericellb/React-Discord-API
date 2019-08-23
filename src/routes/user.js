@@ -11,11 +11,13 @@ router.get('/user/data', async (req, res) => {
   const { userId } = req.query;
   const data = {};
   // Query to get all of the servers + channels + data
-  await sql.query(`SELECT servers.server_id, servers.server_name, channels.channel_id, channels.channel_name, messages.user_name, messages.msg, messages.date FROM messages 
-  JOIN channels ON messages.channel_id = channels.channel_id 
-  JOIN servers ON channels.server_id = servers.server_id 
-  JOIN userservers ON servers.server_id = userservers.server_id 
-  JOIN users ON userservers.user_id = users.user_id WHERE users.user_id = ${sql.escape(userId)}`, (err, result) => {
+  await sql.query(`SELECT servers.server_id, servers.server_name, channels.channel_id, channels.channel_name, messages.user_name, messages.msg, messages.DATE 
+  FROM messages
+  right JOIN channels ON messages.channel_id = channels.channel_id
+  JOIN servers ON servers.server_id = channels.server_id
+  JOIN userservers ON servers.server_id = userservers.server_id
+  JOIN users ON userservers.user_id = users.user_id
+  WHERE users.user_id = ${sql.escape(userId)}`, (err, result) => {
       if (err) {
         res.status(400).send('Server error');
         throw err;
@@ -41,8 +43,10 @@ router.get('/user/data', async (req, res) => {
           if (data["servers"][serverName]["channels"][channelName] === undefined)
             data["servers"][serverName]["channels"][channelName] = [];
 
-          data["servers"][serverName]["channels"][channelName].push({ "from": message.user_name, "msg": message.msg, "date": message.date });
+          if (message.user_name !== null && message.msg !== null)
+            data["servers"][serverName]["channels"][channelName].push({ "from": message.user_name, "msg": message.msg, "date": message.date });
         })
+        console.log(data);
       }
 
       // Query to get all Private messages for user
