@@ -74,7 +74,6 @@ router.delete('/channel/delete', async (req, res) => {
 // Create channel and all intermediary tables
 const createChannel = (channelId, channelName, serverId, userId) => {
   sql.query(`INSERT INTO channels (channel_id, channel_name, server_id) VALUES (${sql.escape(channelId)}, ${sql.escape(channelName)}, ${sql.escape(serverId)})`);
-  sql.query(`INSERT INTO messages (channel_id) VALUES (${sql.escape(channelId)})`);
 }
 
 // Remane a channel
