@@ -34,7 +34,7 @@ io.on('connection', function (socket) {
   }, 5 * 60000)
 
   // Listens for new messages
-  socket.on('simple-chat-new-message', async (msg) => {
+  socket.on('simple-chat-message', async (msg) => {
     // Store messsage in the DB
     var date = new Date();
     let sqlQuery = `INSERT INTO messages (channel_id, user_name, msg, date_time) VALUES (${sql.escape(msg.channel.split('-')[1])}, ${sql.escape(msg.from)}, ${sql.escape(msg.msg)}, ${sql.escape(date)})`;
@@ -47,9 +47,16 @@ io.on('connection', function (socket) {
                   JOIN users ON users.user_id = userservers.user_id AND users.user_last_active > (NOW() - INTERVAL 10 minute)
                   WHERE server_id = ${sql.escape(serverId)}`;
     const users = await sql.query(sqlQuery);
+    action = { type: "message", payload: msg };
+
+    // Iterate over users, and find them in clients list
+    // Emit over socket only to that user
     users.forEach((user) => {
-      action = { type: "message", payload: msg };
-      io.emit(user.user_id, action);
+      clients.find((client) => {
+        if (client.userId === user.user_id) {
+          return io.to(client.id).emit(user.user_id, action);
+        }
+      })
     });
 
     // Emit default message only when server_id is default one
@@ -59,7 +66,7 @@ io.on('connection', function (socket) {
   });
 
   // Listens for private messages
-  socket.on('simple-chat-new-private-message', async (message) => {
+  socket.on('simple-chat-private-message', async (message) => {
 
     // Find userId for username we are messaging
     const from = await sql.query(`SELECT user_id from users WHERE user_name = ${sql.escape(message.from)}`);
@@ -69,27 +76,26 @@ io.on('connection', function (socket) {
     // Emit message to the recipient
     let action = { type: "private-message", payload: { from: message.from, to: message.to, msg: message.msg, user: message.from } };
     // Find socket ID with our userId
-    let socketTo = clients.find((client) => {
+    clients.find((client) => {
       if (client.userId === to[0].user_id) {
-        return client;
+        return io.to(client.id).emit(to[0].user_id, action);
       }
     })
-    io.to(socketTo.id).emit(to[0].user_id, action);
 
     // Emit message back to sender
     action = { type: "private-message", payload: { from: message.from, to: message.to, msg: message.msg, user: message.to } };
-    let socketFrom = clients.find((client) => {
+    clients.find((client) => {
       if (client.userId === from[0].user_id) {
-        return client;
+        return io.to(client.id).emit(from[0].user_id, action);
       }
     })
-    io.to(socketFrom.id).emit(from[0].user_id, action);
   });
 
 
-  // When user connects, he sends userID
-  // Add to list of clients
-  socket.on('simple-chat-userId', function (userId) {
+  // When user signs in he sends over his userId
+  // Add to list of clients userId to identify socket.id
+  socket.on('simple-chat-sign-in', function (userId) {
+    // Keep track of session userId to eventually remove from list of clients
     sessionUserId = userId;
     let clientInfo = new Object();
     clientInfo.userId = sessionUserId;
