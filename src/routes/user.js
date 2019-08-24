@@ -11,7 +11,7 @@ router.get('/user/data', async (req, res) => {
   const { userId } = req.query;
   const data = {};
   // Query to get all of the servers + channels + data
-  await sql.query(`SELECT servers.server_id, servers.server_name, channels.channel_id, channels.channel_name, messages.user_name, messages.msg, messages.DATE 
+  await sql.query(`SELECT servers.server_id, servers.server_name, channels.channel_id, channels.channel_name, messages.user_name, messages.msg, messages.date_time 
   FROM messages
   right JOIN channels ON messages.channel_id = channels.channel_id
   JOIN servers ON servers.server_id = channels.server_id
@@ -44,7 +44,7 @@ router.get('/user/data', async (req, res) => {
             data["servers"][serverName]["channels"][channelName] = [];
 
           if (message.user_name !== null && message.msg !== null)
-            data["servers"][serverName]["channels"][channelName].push({ "from": message.user_name, "msg": message.msg, "date": message.date });
+            data["servers"][serverName]["channels"][channelName].push({ "from": message.user_name, "msg": message.msg, "date": message.date_time });
         })
       }
 
@@ -68,9 +68,9 @@ router.get('/user/data', async (req, res) => {
 
               // If messages from me, set user to the TO 
               if (privateMessage.user_from === userName[0].user_name)
-                user = privateMessage.user_to;
+                user = privateMessage.user_to.toLowerCase();
               else
-                user = privateMessage.user_from;
+                user = privateMessage.user_from.toLowerCase();
 
               if (data["privateMessages"] === undefined)
                 data["privateMessages"] = {};
