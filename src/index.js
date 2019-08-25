@@ -12,7 +12,7 @@ let userRouter = require('./routes/user');
 let serverRouter = require('./routes/server');
 let channelRouter = require('./routes/channel');
 
-function main() {
+async function main() {
   // Config for env variables
   dotenv.config();
   const PORT = process.env.PORT || 3001;
