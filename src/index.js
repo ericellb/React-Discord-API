@@ -78,7 +78,7 @@ async function main() {
       // Find socket ID with our userId
       clients.find((client) => {
         if (client.userId === to[0].user_id) {
-          return io.to(client.id).emit(to[0].user_id, action);
+          io.to(client.id).emit(to[0].user_id, action);
         }
       })
 
@@ -86,7 +86,7 @@ async function main() {
       action = { type: "private-message", payload: { from: message.from, to: message.to, msg: message.msg, user: message.to } };
       clients.find((client) => {
         if (client.userId === from[0].user_id) {
-          return io.to(client.id).emit(from[0].user_id, action);
+          io.to(client.id).emit(from[0].user_id, action);
         }
       })
     });
