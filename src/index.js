@@ -24,15 +24,6 @@ async function main() {
     // Keep track of current socket userId
     let sessionUserId = null;
 
-    // If user is connected to socket and established connection with his userId
-    // We will update his user_last_active every 5 minutes
-    setInterval(async () => {
-      if (socket.userId !== null) {
-        var date = new Date();
-        sql.query(`UPDATE users SET user_last_active = ${sql.escape(date)} WHERE user_id = ${sql.escape(socket.userId)}`);
-      }
-    }, 5 * 60000)
-
     // Listens for new messages
     socket.on('simple-chat-message', async (msg) => {
       // Store messsage in the DB
@@ -65,14 +56,15 @@ async function main() {
         io.emit('default', msg);
     });
 
+
     // Listens for private messages
     socket.on('simple-chat-private-message', async (message) => {
 
       // Find userId for username we are messaging
       const from = await sql.query(`SELECT user_id from users WHERE user_name = ${sql.escape(message.from)}`);
       const to = await sql.query(`SELECT user_id from users WHERE user_name = ${sql.escape(message.to)}`);
-      var date = new Date();
-      sql.query(`INSERT INTO user_messages (user_from, user_to, msg, date_time) VALUES (${sql.escape(from[0].user_id)}, ${sql.escape(to[0].user_id)}, ${sql.escape(message.msg)})`);
+      let date = new Date();
+      sql.query(`INSERT INTO user_messages (user_from, user_to, msg, date_time) VALUES (${sql.escape(from[0].user_id)}, ${sql.escape(to[0].user_id)}, ${sql.escape(message.msg)}, ${sql.escape(date)})`);
 
       // Emit message to the recipient
       let action = { type: "private-message", payload: { from: message.from, to: message.to, msg: message.msg, user: message.from } };
@@ -95,19 +87,26 @@ async function main() {
 
     // When user signs in he sends over his userId
     // Add to list of clients userId to identify socket.id
-    socket.on('simple-chat-sign-in', function (userId) {
+    socket.on('simple-chat-sign-in', (userId) => {
       // Keep track of session userId to eventually remove from list of clients
       sessionUserId = userId;
       let clientInfo = new Object();
       clientInfo.userId = sessionUserId;
       clientInfo.id = socket.id;
       clients.push(clientInfo);
-      var date = new Date();
+      let date = new Date();
       sql.query(`UPDATE users SET user_last_active = ${sql.escape(date)} WHERE user_id = ${sql.escape(userId)}`);
     })
 
+
+    // On ping update active status (Client sends every 5 minutes)
+    socket.on('ping', () => {
+      let date = new Date();
+      sql.query(`UPDATE users SET user_last_active = ${sql.escape(date)} WHERE user_id = ${sql.escape(sessionUserId)}`);
+    })
+
     // On disconnect remove from client list
-    socket.on('disconnect', function () {
+    socket.on('disconnect', () => {
       clients.find((client, i) => {
         if (client.userId === sessionUserId) {
           return clients.splice(i, 1);
