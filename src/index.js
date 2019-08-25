@@ -71,7 +71,8 @@ async function main() {
       // Find userId for username we are messaging
       const from = await sql.query(`SELECT user_id from users WHERE user_name = ${sql.escape(message.from)}`);
       const to = await sql.query(`SELECT user_id from users WHERE user_name = ${sql.escape(message.to)}`);
-      sql.query(`INSERT INTO user_messages (user_from, user_to, msg) VALUES (${sql.escape(from[0].user_id)}, ${sql.escape(to[0].user_id)}, ${sql.escape(message.msg)})`);
+      var date = new Date();
+      sql.query(`INSERT INTO user_messages (user_from, user_to, msg, date_time) VALUES (${sql.escape(from[0].user_id)}, ${sql.escape(to[0].user_id)}, ${sql.escape(message.msg)})`);
 
       // Emit message to the recipient
       let action = { type: "private-message", payload: { from: message.from, to: message.to, msg: message.msg, user: message.from } };

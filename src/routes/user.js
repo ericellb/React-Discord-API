@@ -78,7 +78,7 @@ router.get('/user/data', async (req, res) => {
               if (data["privateMessages"][user] === undefined)
                 data["privateMessages"][user] = [];
 
-              data["privateMessages"][user].push({ "user": user, "from": privateMessage.user_from, "to": privateMessage.user_to, "msg": privateMessage.msg });
+              data["privateMessages"][user].push({ "user": user, "from": privateMessage.user_from, "to": privateMessage.user_to, "msg": privateMessage.msg, "date_time": privateMessage.date_time });
             })
 
             // If no private messages return data with empty privateMessages array
