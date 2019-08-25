@@ -32,28 +32,11 @@ async function main() {
       sql.query(sqlQuery);
       const serverId = msg.server.split('-')[1];
 
-      // Emit messages to only users part of specific server
-      // Will only return list of users part of server and active in last 10 minutes
-      sqlQuery = `SELECT userservers.user_id FROM userservers 
-                  JOIN users ON users.user_id = userservers.user_id AND users.user_last_active > (NOW() - INTERVAL 10 minute)
-                  WHERE server_id = ${sql.escape(serverId)}`;
-      const users = await sql.query(sqlQuery);
+      // Format our action for client to parse
       action = { type: "message", payload: msg };
 
-      // Iterate over users, and find them in clients list
-      // Emit over socket only to that user
-      users.forEach((user) => {
-        clients.find((client) => {
-          if (client.userId === user.user_id) {
-            return io.to(client.id).emit(user.user_id, action);
-          }
-        })
-      });
-
-      // Emit default message only when server_id is default one
-      const serverName = msg.server.split('-')[0];
-      if (serverName.toLowerCase() === "default")
-        io.emit('default', msg);
+      // Emit the message to everyone that joined that server
+      io.to(serverId).emit('update', action);
     });
 
 
@@ -71,7 +54,7 @@ async function main() {
       // Find socket ID with our userId
       clients.find((client) => {
         if (client.userId === to[0].user_id) {
-          io.to(client.id).emit(to[0].user_id, action);
+          io.to(client.id).emit('update', action);
         }
       })
 
@@ -79,7 +62,7 @@ async function main() {
       action = { type: "private-message", payload: { from: message.from, to: message.to, msg: message.msg, user: message.to } };
       clients.find((client) => {
         if (client.userId === from[0].user_id) {
-          io.to(client.id).emit(from[0].user_id, action);
+          io.to(client.id).emit('update', action);
         }
       })
     });
@@ -90,14 +73,16 @@ async function main() {
     socket.on('simple-chat-sign-in', (userId) => {
       // Keep track of session userId to eventually remove from list of clients
       sessionUserId = userId;
-      let clientInfo = new Object();
-      clientInfo.userId = sessionUserId;
-      clientInfo.id = socket.id;
-      clients.push(clientInfo);
+      clients.push({ userId: sessionUserId, id: socket.id });
       let date = new Date();
       sql.query(`UPDATE users SET user_last_active = ${sql.escape(date)} WHERE user_id = ${sql.escape(userId)}`);
     })
 
+
+    // Listens for subscribing to servers (socket io rooms)
+    socket.on('subscribe', (serverId) => {
+      socket.join(serverId);
+    })
 
     // On ping update active status (Client sends every 5 minutes)
     socket.on('ping', () => {
@@ -108,7 +93,7 @@ async function main() {
     // On disconnect remove from client list
     socket.on('disconnect', () => {
       clients.find((client, i) => {
-        if (client.userId === sessionUserId) {
+        if (client.userName === sessionUserId) {
           return clients.splice(i, 1);
         }
       })
