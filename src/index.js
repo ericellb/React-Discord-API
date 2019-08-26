@@ -49,16 +49,15 @@ async function main() {
       let date = new Date();
       sql.query(`INSERT INTO user_messages (user_from, user_to, msg, date_time) VALUES (${sql.escape(from[0].user_id)}, ${sql.escape(to[0].user_id)}, ${sql.escape(message.msg)}, ${sql.escape(date)})`);
 
-      // Emit message to the recipient
+      // Find which socket to send TO
       let action = { type: "private-message", payload: { from: message.from, to: message.to, msg: message.msg, user: message.from } };
-      // Find socket ID with our userId
       clients.find((client) => {
         if (client.userId === to[0].user_id) {
           io.to(client.id).emit('update', action);
         }
       })
 
-      // Emit message back to sender
+      // Find which socket to 
       action = { type: "private-message", payload: { from: message.from, to: message.to, msg: message.msg, user: message.to } };
       clients.find((client) => {
         if (client.userId === from[0].user_id) {

@@ -103,6 +103,18 @@ router.get('/server/admin', async (req, res) => {
 
 })
 
+router.get('/server/activeusers', async (req, res) => {
+  const { serverId } = req.query;
+
+  // Check params
+  if (!serverId) {
+    res.status(400).send('Invalid params');
+  }
+
+  const response = await getActiveUsers(serverId);
+  res.send(response);
+})
+
 // Creates Server and all intermediary join tables
 const createServer = (serverId, serverName, channelId, userId) => {
   sql.query(`INSERT INTO servers (server_id, server_name, owner_id) VALUES (${sql.escape(serverId)}, ${sql.escape(serverName)}, ${sql.escape(userId)})`);
@@ -125,6 +137,12 @@ const renameServer = (serverName, serverId) => {
 // Deletes a server
 const deleteServer = (serverId) => {
   sql.query(`DELETE FROM servers where server_id = ${sql.escape(serverId)}`);
+}
+
+const getActiveUsers = (serverId) => {
+  return sql.query(`SELECT users.user_name FROM userservers 
+  JOIN users ON users.user_id = userservers.user_id 
+  WHERE userservers.server_id = ${sql.escape(serverId)} AND users.user_last_active > (NOW() - INTERVAL 10 MINUTE)`);
 }
 
 module.exports = router;
