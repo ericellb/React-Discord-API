@@ -46,6 +46,7 @@ router.get('/user/data', async (req, res) => {
           if (message.user_name !== null && message.msg !== null)
             data["servers"][serverName]["channels"][channelName].push({ "from": message.user_name, "msg": message.msg, "date": message.date_time });
         })
+
       }
 
       // Query to get all Private messages for user
