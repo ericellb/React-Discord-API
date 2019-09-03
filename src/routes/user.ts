@@ -1,15 +1,17 @@
-let express = require('express');
-let router = express.Router();
-let mysql = require('mysql');
-let sql = require('../db');
-let bcrypt = require('bcryptjs');
-let { userIsAdmin, getUniqueId } = require('../methods');
+import express from 'express';
+import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
+import { connection as sql } from '../db/db';
+import { getUniqueId } from '../utils/utils';
+import { MysqlError } from 'mysql';
+
+export let router = express.Router();
 
 // Route to get data associated with a specific user
 // Expects -> userId
-router.get('/user/data', async (req, res) => {
+router.get('/user/data', async (req: Request, res: Response) => {
   const { userId } = req.query;
-  const data = {};
+  const data: any = {};
   // Query to get all of the servers + channels + data
   await sql.query(
     `SELECT servers.server_id, servers.server_name, channels.channel_id, channels.channel_name, messages.user_name, messages.msg, messages.date_time 
@@ -24,7 +26,7 @@ router.get('/user/data', async (req, res) => {
         res.status(400).send('Server error');
         throw err;
       } else {
-        result.forEach(message => {
+        result.forEach((message: any) => {
           // Build servers / channel names with IDs
           const serverName = message.server_name + '-' + message.server_id;
           const channelName = message.channel_name + '-' + message.channel_id;
@@ -55,13 +57,13 @@ router.get('/user/data', async (req, res) => {
                 JOIN users c ON c.user_id = a.user_to 
                 WHERE a.user_from = ${sql.escape(userId)} 
                 OR a.user_to = ${sql.escape(userId)}`,
-        async (err, result) => {
+        async (err: MysqlError, result: []) => {
           if (err) {
             res.status(400).send('Server error');
             throw err;
           } else {
-            const userName = await sql.query(`SELECT user_name from users where user_id = ${sql.escape(userId)}`);
-            result.forEach(privateMessage => {
+            const userName: any = await sql.query(`SELECT user_name from users where user_id = ${sql.escape(userId)}`);
+            result.forEach((privateMessage: any) => {
               // Build privateMessages object
               let user = null;
 
@@ -98,7 +100,7 @@ router.get('/user/data', async (req, res) => {
 // Expects -> userName
 // Expects -> userPass
 // Returns -> userId
-router.post('/user/create', async (req, res) => {
+router.post('/user/create', async (req: Request, res: Response) => {
   // Get query data from url
   let { userName, userPass } = req.query;
   let error = null;
@@ -114,7 +116,7 @@ router.post('/user/create', async (req, res) => {
   if (error !== null) {
     res.status(401).send(error);
   } else {
-    let response = await sql.query(`SELECT user_id from users where user_name = ${sql.escape(userName)}`);
+    let response: any = await sql.query(`SELECT user_id from users where user_name = ${sql.escape(userName)}`);
     // User already exists
     if (response.length > 0) {
       error = 'Username already exists';
@@ -147,7 +149,7 @@ router.post('/user/create', async (req, res) => {
 // Expects -> userName
 // Expects -> userPass
 // Returns -> userId
-router.get('/user/login', async (req, res) => {
+router.get('/user/login', async (req: Request, res: Response) => {
   const { userName, userPass } = req.query;
   let error = {};
 
@@ -157,7 +159,7 @@ router.get('/user/login', async (req, res) => {
   }
 
   // Check if password matches, if so return userName and userId
-  const response = await sql.query(`SELECT * FROM users WHERE user_name = '${userName}'`);
+  const response: any = await sql.query(`SELECT * FROM users WHERE user_name = '${userName}'`);
   const hashPass = response[0].user_pass;
   const isMatch = await bcrypt.compare(userPass, hashPass);
   if (isMatch) {
@@ -167,5 +169,3 @@ router.get('/user/login', async (req, res) => {
     res.status(400).send(error);
   }
 });
-
-module.exports = router;

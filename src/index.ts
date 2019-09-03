@@ -1,27 +1,34 @@
+import { Socket } from 'socket.io';
+import { Request, Response, NextFunction } from 'express';
+
 // Dependencies
-let express = require('express');
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import { connection as sql } from './db/db';
+import * as http from 'http';
+
+// Instantiate our app / server / socket io
 let app = express();
-let http = require('http').createServer(app);
+let server = http.createServer(app);
 let io = require('socket.io')(http);
-let dotenv = require('dotenv');
-let cors = require('cors');
-let sql = require('./db');
 
 // Routes
-let userRouter = require('./routes/user');
-let serverRouter = require('./routes/server');
-let channelRouter = require('./routes/channel');
+import { router as userRouter } from './routes/user';
+import { router as serverRouter } from './routes/server';
+import { router as channelRouter } from './routes/channel';
 
 async function main() {
   // Config for env variables
   dotenv.config();
   const PORT = process.env.PORT || 3001;
-  let clients = [];
+  let clients: SocketClient[] = [];
 
   // Create socket
-  io.on('connection', function(socket) {
+  io.on('connection', function(socket: Socket) {
     // Keep track of current socket userId
-    let sessionUserId = null;
+    let sessionUserId: string = '';
+    let action: SocketAction;
 
     // Listens for new messages
     socket.on('simple-chat-message', async msg => {
@@ -43,8 +50,8 @@ async function main() {
     // Listens for private messages
     socket.on('simple-chat-private-message', async message => {
       // Find userId for username we are messaging
-      const from = await sql.query(`SELECT user_id from users WHERE user_name = ${sql.escape(message.from)}`);
-      const to = await sql.query(`SELECT user_id from users WHERE user_name = ${sql.escape(message.to)}`);
+      const from: any = await sql.query(`SELECT user_id from users WHERE user_name = ${sql.escape(message.from)}`);
+      const to: any = await sql.query(`SELECT user_id from users WHERE user_name = ${sql.escape(message.to)}`);
       let date = new Date();
       sql.query(
         `INSERT INTO user_messages (user_from, user_to, msg, date_time) VALUES (${sql.escape(
@@ -53,7 +60,7 @@ async function main() {
       );
 
       // Find which socket to send TO
-      let action = {
+      action = {
         type: 'private-message',
         payload: { from: message.from, to: message.to, msg: message.msg, user: message.from.toLowerCase() }
       };
@@ -99,7 +106,7 @@ async function main() {
     // On disconnect remove from client list
     socket.on('disconnect', () => {
       clients.find((client, i) => {
-        if (client.userName === sessionUserId) {
+        if (client.userId === sessionUserId) {
           return clients.splice(i, 1);
         }
       });
@@ -107,7 +114,7 @@ async function main() {
   });
 
   // Server listen on Port
-  http.listen(PORT, function() {
+  server.listen(PORT, function() {
     console.log(`API Listening on ${PORT}`);
   });
 
@@ -116,7 +123,7 @@ async function main() {
   app.use(cors());
 
   // Log the routes
-  app.use((req, res, next) => {
+  app.use((req: Request, res: Response, next: NextFunction) => {
     console.log(`${new Date().toString()} => ${req.originalUrl}`);
     next();
   });
