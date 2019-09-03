@@ -121,7 +121,7 @@ async function main() {
 
   // Express API Setup
   app.disable('x-powered-by');
-  app.use(cors({ credentials: true, origin: 'https://ericellb.github.io' }));
+  app.use(cors());
 
   // Log the routes
   app.use((req: Request, res: Response, next: NextFunction) => {
