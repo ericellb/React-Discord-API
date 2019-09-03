@@ -1,9 +1,9 @@
-interface SocketClient {
+export interface SocketClient {
   userId: string;
   id: string;
 }
 
-interface SocketAction {
+export interface SocketAction {
   type: string;
   payload: any;
 }

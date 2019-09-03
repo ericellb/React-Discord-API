@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 let express = require('express');
 import { connection as sql } from '../db/db';
-let { userExists, getUniqueId, userIsAdmin } = require('../methods');
+import { userExists, getUniqueId, userIsAdmin } from '../utils/utils';
 
 export let router = express.Router();
 

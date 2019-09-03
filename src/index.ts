@@ -12,6 +12,7 @@ import * as http from 'http';
 let app = express();
 let server = http.createServer(app);
 let io = require('socket.io')(http);
+import { SocketAction, SocketClient } from './types/types';
 
 // Routes
 import { router as userRouter } from './routes/user';
