@@ -99,7 +99,7 @@ async function main() {
     });
 
     // On ping update active status of current user (Client sends every 5 minutes)
-    socket.on('ping', () => {
+    socket.on('update-active', () => {
       let date = new Date();
       sql.query(`UPDATE users SET user_last_active = ${sql.escape(date)} WHERE user_id = ${sql.escape(sessionUserId)}`);
     });
