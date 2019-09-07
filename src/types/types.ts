@@ -1,5 +1,6 @@
 export interface SocketClientList {
   userId: string;
+  userName: string;
   id: string;
 }
 
