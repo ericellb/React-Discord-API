@@ -86,12 +86,12 @@ async function main() {
 
     // When user signs in he sends over his userId
     // Add to list of clients userId to identify socket.id
-    socket.on('simple-chat-sign-in', ({ userId, userName }) => {
+    socket.on('simple-chat-sign-in', (data: { userId: string; userName: string }) => {
       // Keep track of session userId to eventually remove from list of clients
-      sessionUserId = userId;
-      clients.push({ userId: sessionUserId, id: socket.id, userName: userName });
+      sessionUserId = data.userId;
+      clients.push({ userId: sessionUserId, id: socket.id, userName: data.userName });
       let date = new Date();
-      sql.query(`UPDATE users SET user_last_active = ${sql.escape(date)} WHERE user_id = ${sql.escape(userId)}`);
+      sql.query(`UPDATE users SET user_last_active = ${sql.escape(date)} WHERE user_id = ${sql.escape(sessionUserId)}`);
     });
 
     // Listens for subscribing to servers (socket io rooms)
